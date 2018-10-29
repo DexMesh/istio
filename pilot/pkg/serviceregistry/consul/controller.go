@@ -181,7 +181,15 @@ func (c *Controller) GetProxyServiceInstances(node *model.Proxy) ([]*model.Servi
 			if addr == "" {
 				addr = endpoint.Address
 			}
-			if node.IPAddress == addr {
+			if len(node.IPAddresses) > 0 {
+				fmt.Println(node.IPAddresses)
+				for _, ipAddress := range node.IPAddresses {
+					if ipAddress == addr {
+						out = append(out, convertInstance(endpoint))
+						break
+					}
+				}
+			} else if node.IPAddress == addr {
 				out = append(out, convertInstance(endpoint))
 			}
 		}

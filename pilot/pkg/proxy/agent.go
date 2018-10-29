@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"golang.org/x/time/rate"
-
 	"istio.io/istio/pkg/log"
 )
 

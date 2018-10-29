@@ -62,6 +62,11 @@ type Proxy struct {
 	// co-located service instances. Example: "10.60.1.6"
 	IPAddress string
 
+	// IPAddresses are the IP addresses of the proxy used to identify it and its
+	// co-located service instances. Example: "10.60.1.6". In some cases, the host
+	// where the poxy and service instances reside may have more than one IP address
+	IPAddresses []string
+
 	// ID is the unique platform-specific sidecar proxy ID
 	ID string
 

@@ -16,11 +16,14 @@ package v2
 
 import (
 	"errors"
+	"fmt"
 	"io"
+	"net"
 	"os"
 	"reflect"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -38,6 +41,10 @@ import (
 
 	"istio.io/istio/pilot/pkg/model"
 	istiolog "istio.io/istio/pkg/log"
+)
+
+const (
+	ipAddressSeparator = ";"
 )
 
 var (
@@ -381,6 +388,9 @@ func (s *DiscoveryServer) StreamAggregatedResources(stream ads.AggregatedDiscove
 				return err
 			}
 			nt.Metadata = model.ParseMetadata(discReq.Node.Metadata)
+			if nt.Metadata["IPAddresses"] != "" {
+				nt.IPAddresses, _ = parseIPAddresses(nt.Metadata["IPAddresses"])
+			}
 			con.mu.Lock()
 			con.modelNode = &nt
 			con.mu.Unlock()
@@ -514,6 +524,16 @@ func (s *DiscoveryServer) StreamAggregatedResources(stream ads.AggregatedDiscove
 			}
 		}
 	}
+}
+
+func parseIPAddresses(s string) ([]string, error) {
+	ipAddresses := strings.Split(s, ipAddressSeparator)
+	for _, ipAddress := range ipAddresses {
+		if net.ParseIP(ipAddress) == nil {
+			return ipAddresses, fmt.Errorf("invalid IP address %q", ipAddress)
+		}
+	}
+	return ipAddresses, nil
 }
 
 // IncrementalAggregatedResources is not implemented.
