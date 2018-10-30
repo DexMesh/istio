@@ -191,6 +191,10 @@ func WriteBootstrap(config *meshconfig.ProxyConfig, node string, epoch int, pilo
 			}
 		}
 	}
+
+	// Suppot multiple network interfaces
+	meta["IPAddresses"] = getNodeIPs()
+
 	opts["meta"] = meta
 
 	// TODO: allow reading a file with additional metadata (for example if created with
@@ -249,4 +253,35 @@ func WriteBootstrap(config *meshconfig.ProxyConfig, node string, epoch int, pilo
 	// Execute needs some sort of io.Writer
 	err = t.Execute(fout, opts)
 	return fname, err
+}
+
+func getNodeIPs() string {
+	ipAddresses := ""
+
+	ifaces, _ := net.Interfaces()
+
+	for _, iface := range ifaces {
+		if iface.Flags&net.FlagUp == 0 {
+			continue // interface down
+		}
+		if iface.Flags&net.FlagLoopback != 0 {
+			continue // loopback interface
+		}
+		addrs, _ := iface.Addrs()
+
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+			if ip == nil || ip.IsLoopback() {
+				continue
+			}
+			ipAddresses = ipAddresses + ip.String() + ";"
+		}
+	}
+	return ipAddresses
 }
