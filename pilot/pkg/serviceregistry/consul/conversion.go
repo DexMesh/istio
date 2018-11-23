@@ -37,7 +37,8 @@ func convertLabels(labels []string) model.Labels {
 		if len(vals) > 1 {
 			out[vals[0]] = vals[1]
 		} else {
-			log.Warnf("Tag %v ignored since it is not of form key|value", tag)
+			// Ingore the warnning because there are two many unrecongized tag in MSB consul
+			//log.Warnf("Tag %v ignored since it is not of form key|value", tag)
 		}
 	}
 	return out
@@ -65,7 +66,7 @@ func convertService(endpoints []*api.CatalogService) *model.Service {
 	for _, endpoint := range endpoints {
 		name = endpoint.ServiceName
 
-		port := convertPort(endpoint.ServicePort, endpoint.ServiceMeta[protocolTagName])
+		port := convertPort(endpoint.ServicePort, endpoint.NodeMeta[protocolTagName])
 
 		if svcPort, exists := ports[port.Port]; exists && svcPort.Protocol != port.Protocol {
 			log.Warnf("Service %v has two instances on same port %v but different protocols (%v, %v)",
@@ -76,8 +77,8 @@ func convertService(endpoints []*api.CatalogService) *model.Service {
 
 		// TODO This will not work if service is a mix of external and local services
 		// or if a service has more than one external name
-		if endpoint.ServiceMeta[externalTagName] != "" {
-			externalName = endpoint.ServiceMeta[externalTagName]
+		if endpoint.NodeMeta[externalTagName] != "" {
+			externalName = endpoint.NodeMeta[externalTagName]
 			meshExternal = true
 			resolution = model.Passthrough
 		}
@@ -102,7 +103,7 @@ func convertService(endpoints []*api.CatalogService) *model.Service {
 
 func convertInstance(instance *api.CatalogService) *model.ServiceInstance {
 	labels := convertLabels(instance.ServiceTags)
-	port := convertPort(instance.ServicePort, instance.ServiceMeta[protocolTagName])
+	port := convertPort(instance.ServicePort, instance.NodeMeta[protocolTagName])
 
 	addr := instance.ServiceAddress
 	if addr == "" {
@@ -111,7 +112,7 @@ func convertInstance(instance *api.CatalogService) *model.ServiceInstance {
 
 	meshExternal := false
 	resolution := model.ClientSideLB
-	externalName := instance.ServiceMeta[externalTagName]
+	externalName := instance.NodeMeta[externalTagName]
 	if externalName != "" {
 		meshExternal = true
 		resolution = model.DNSLB
