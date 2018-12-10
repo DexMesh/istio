@@ -63,8 +63,11 @@ func convertService(endpoints []*api.CatalogService) *model.Service {
 	resolution := model.ClientSideLB
 
 	ports := make(map[int]*model.Port)
+	instanceAddresses := make([]string, 0)
 	for _, endpoint := range endpoints {
 		name = endpoint.ServiceName
+
+		instanceAddresses = append(instanceAddresses, endpoint.ServiceAddress)
 
 		port := convertPort(endpoint.ServicePort, endpoint.ServiceMeta[protocolTagName])
 
@@ -90,12 +93,13 @@ func convertService(endpoints []*api.CatalogService) *model.Service {
 	}
 
 	out := &model.Service{
-		Hostname:     serviceHostname(name),
-		Address:      "0.0.0.0",
-		Ports:        svcPorts,
-		ExternalName: model.Hostname(externalName),
-		MeshExternal: meshExternal,
-		Resolution:   resolution,
+		Hostname:          serviceHostname(name),
+		Address:           "0.0.0.0",
+		InstanceAddresses: instanceAddresses,
+		Ports:             svcPorts,
+		ExternalName:      model.Hostname(externalName),
+		MeshExternal:      meshExternal,
+		Resolution:        resolution,
 	}
 
 	return out
